@@ -1,15 +1,48 @@
 from fastapi import FastAPI
+from sqlalchemy import create_engine
+from sqlalchemy.orm import declarative_base
+from sqlalchemy import Column, String
+from sqlalchemy.orm import sessionmaker
+import random
+import string
+from pydantic import BaseModel
+
+DATABASE_URL = "sqlite:///./urls.db"
+engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+SessionLocal = sessionmaker(bind=engine)
+
+Base = declarative_base()
+
+class URL(Base):
+    __tablename__ = "urls"
+    code = Column(String, primary_key=True)
+    original_url = Column(String, nullable=False)
+
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
-db = {}
+def generate_code():
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=6))
+
+class ShortenRequest(BaseModel):
+    url: str
 
 @app.post("/shorten")
-def shorten_url(url: str):
-    code = str(len(db) + 1)
-    db[code] = url
+def shorten_url(request: ShortenRequest):
+    session = SessionLocal()
+    code = generate_code()
+    new_url = URL(code=code, original_url=request.url)
+    session.add(new_url)
+    session.commit()
+    session.close()
     return {"short_code": code}
 
 @app.get("/{code}")
 def redirect(code: str):
-    return {"original_url": db.get(code, "not found")}
+    session = SessionLocal()
+    entry = session.query(URL).filter(URL.code == code).first()
+    session.close()
+    if entry is None:
+        return {"error": "not found"}
+    return {"original_url": entry.original_url}
