@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base
 from sqlalchemy import Column, String
@@ -30,6 +30,8 @@ class ShortenRequest(BaseModel):
 
 @app.post("/shorten")
 def shorten_url(request: ShortenRequest):
+    if not request.url.startswith("http://") and not request.url.startswith("https://"):
+        raise HTTPException(status_code=400, detail="Invald URL format")
     session = SessionLocal()
     code = generate_code()
     new_url = URL(code=code, original_url=request.url)
@@ -48,5 +50,5 @@ def redirect(code: str):
     entry = session.query(URL).filter(URL.code == code).first()
     session.close()
     if entry is None:
-        return {"error": "not found"}
+        raise HTTPException(status_code=404, detail="URL not found")
     return {"original_url": entry.original_url}
