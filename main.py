@@ -33,6 +33,10 @@ def shorten_url(request: ShortenRequest):
     session = SessionLocal()
     code = generate_code()
     new_url = URL(code=code, original_url=request.url)
+    entry = session.query(URL).filter(URL.original_url == request.url).first()
+    if entry != None:
+        session.close()
+        return {"short_code": entry.code}
     session.add(new_url)
     session.commit()
     session.close()
