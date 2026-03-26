@@ -11,7 +11,7 @@ A simple URL shortening REST API built with FastAPI and SQLite.
 - SQLAlchemy
 
 ## Run locally
-pip install -r requirements.txt
+pip install -r requirements.txt <br>
 uvivorn main:app reload
 
 ## Endpoints
