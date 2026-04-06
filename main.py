@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base
-from sqlalchemy import Column, String
+from sqlalchemy import Column, String, Integer
 from sqlalchemy.orm import sessionmaker
 import random
 import string
@@ -17,6 +17,8 @@ class URL(Base):
     __tablename__ = "urls"
     code = Column(String, primary_key=True)
     original_url = Column(String, nullable=False)
+    click_count = Column(Integer, default=0)
+    
 
 Base.metadata.create_all(bind=engine)
 
@@ -48,7 +50,12 @@ def shorten_url(request: ShortenRequest):
 def redirect(code: str):
     session = SessionLocal()
     entry = session.query(URL).filter(URL.code == code).first()
-    session.close()
     if entry is None:
         raise HTTPException(status_code=404, detail="URL not found")
-    return {"original_url": entry.original_url}
+    try:
+        entry.click_count += 1
+        session.commit()
+        return {"original_url": entry.original_url, "click_count": entry.click_count}
+    finally:
+        session.close()
+    
