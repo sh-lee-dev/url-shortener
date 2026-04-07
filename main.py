@@ -38,16 +38,18 @@ class ShortenRequest(BaseModel):
 def shorten_url(request: ShortenRequest):
     if not request.url.startswith("http://") and not request.url.startswith("https://"):
         raise HTTPException(status_code=400, detail="Invald URL format")
+    
     session = SessionLocal()
-    code = generate_code()
-    new_url = URL(code=code, original_url=request.url)
-    entry = session.query(URL).filter(URL.original_url == request.url).first()
-    if entry != None:
+    try:
+        code = generate_code()
+        new_url = URL(code=code, original_url=request.url)
+        entry = session.query(URL).filter(URL.original_url == request.url).first()
+        if entry != None:
+            return {"short_code": entry.code}
+        session.add(new_url)
+        session.commit()
+    finally:
         session.close()
-        return {"short_code": entry.code}
-    session.add(new_url)
-    session.commit()
-    session.close()
     return {"short_code": code}
 
 @app.get("/{code}")
