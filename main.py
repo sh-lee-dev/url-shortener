@@ -70,4 +70,15 @@ def redirect(code: str, db=Depends(get_db)):
     entry.click_count += 1
     db.commit()
     return {"original_url": entry.original_url, "click_count": entry.click_count}
+
+class StatsResponse(BaseModel):
+    click_count: int
+
+@app.get("/stats/{code}", response_model=StatsResponse)
+def stats(code: str, db=Depends(get_db)):
+    entry = db.query(URL).filter(URL.code == code).first()
+    if entry is None:
+        raise HTTPException(status_code=404, detail="URL not found")
+    
+    return {"click_count": entry.click_count}
     

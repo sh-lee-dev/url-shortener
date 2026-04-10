@@ -22,3 +22,8 @@ def test_not_found():
     wrong_code = client.get("/WrongCode")
     assert wrong_code.status_code == 404
 
+def test_stats():
+    response = client.post("/shorten", json={"url": "https://google.com"})
+    code = response.json()["short_code"]
+    response = client.get(f"/stats/{code}")
+    assert "click_count" in response.json()
