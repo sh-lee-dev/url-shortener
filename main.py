@@ -40,7 +40,10 @@ def generate_code():
 class ShortenRequest(BaseModel):
     url: str
 
-@app.post("/shorten")
+class ShortenResponse(BaseModel):
+    short_code: str
+
+@app.post("/shorten", response_model=ShortenResponse)
 def shorten_url(request: ShortenRequest, db=Depends(get_db)):
     if not request.url.startswith("http://") and not request.url.startswith("https://"):
         raise HTTPException(status_code=400, detail="Invalid URL format")
@@ -54,7 +57,11 @@ def shorten_url(request: ShortenRequest, db=Depends(get_db)):
     db.commit()
     return {"short_code": code}
 
-@app.get("/{code}")
+class RedirectResponse(BaseModel):
+    original_url: str
+    click_count: int
+
+@app.get("/{code}", response_model=RedirectResponse)
 def redirect(code: str, db=Depends(get_db)):
     entry = db.query(URL).filter(URL.code == code).first()
     if entry is None:
