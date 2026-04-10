@@ -12,8 +12,8 @@ flowchart TD
     Client([Client])
 
     Client -->|POST /shorten| Validation[Pydantic validation]
-    Client -->|GET /{code}| Endpoint[Endpoints]
-    Client -->|GET /stats/{code}| Stats[Stats endpoint]
+    Client -->|GET /code| Endpoint[Endpoints]
+    Client -->|GET /stats/code| Stats[Stats endpoint]
 
     Validation --> DI
     Endpoint --> DI
@@ -28,7 +28,7 @@ flowchart TD
     end
 
     DI --> ORM[SQLAlchemy ORM]
-    ORM --> DB[(SQLite\nurls.db)]
+    ORM --> DB[(SQLite urls.db)]
 ```
 
 ## Tech Stack
